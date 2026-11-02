@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "summary.schema.json",
+  "title": "Summary statistics",
+  "description": "Summary block of a simulate result (architecture.md 6.6). Rates are full-precision doubles, null when accesses=0; amat is present (as an object) iff both timing assumptions were supplied and is omitted entirely otherwise; unit is always cycles (modeling assumption, prd.md 7).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["accesses", "hits", "misses", "evictions", "hit_rate", "miss_rate", "trace_sha256"],
+  "properties": {
+    "accesses": { "type": "integer", "minimum": 0 },
+    "hits": { "type": "integer", "minimum": 0 },
+    "misses": { "type": "integer", "minimum": 0 },
+    "evictions": { "type": "integer", "minimum": 0 },
+    "hit_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "miss_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "amat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hit_time", "miss_penalty", "value", "unit"],
+      "properties": {
+        "hit_time": { "type": "number", "minimum": 0 },
+        "miss_penalty": { "type": "number", "minimum": 0 },
+        "value": { "type": "number", "minimum": 0 },
+        "unit": { "const": "cycles" }
+      }
+    },
+    "replacement_meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy"],
+      "properties": {
+        "policy": { "enum": ["LRU", "FIFO", "RANDOM"] },
+        "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+        "rng_draws": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "trace_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}

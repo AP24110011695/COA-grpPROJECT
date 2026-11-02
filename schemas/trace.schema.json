@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "trace.schema.json",
+  "title": "Memory-address trace",
+  "description": "Canonical trace contract (architecture.md 6.4). The per-address upper bound (2^address_width_bits - 1) is enforced by the engine against the job's config.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "addresses"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1 },
+    "addresses": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "type": "integer", "minimum": 0 }
+    }
+  }
+}

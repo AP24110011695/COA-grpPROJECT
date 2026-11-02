@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "event.schema.json",
+  "title": "Per-access event record",
+  "description": "One entry of the result envelope's events array (architecture.md 6.5). index is null for fully-associative; evicted is non-null only when a VALID line was displaced (never for fills of invalid lines); explanation strings use the fixed templates of architecture.md 10.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["n", "address", "block", "tag", "index", "offset", "set", "way", "result", "loaded", "evicted", "policy_meta", "explanation"],
+  "properties": {
+    "n": { "type": "integer", "minimum": 1 },
+    "address": { "type": "integer", "minimum": 0 },
+    "block": { "type": "integer", "minimum": 0 },
+    "tag": { "type": "integer", "minimum": 0 },
+    "index": { "type": ["integer", "null"] },
+    "offset": { "type": "integer", "minimum": 0 },
+    "set": { "type": "integer", "minimum": 0 },
+    "way": { "type": "integer", "minimum": 0 },
+    "result": { "enum": ["hit", "miss"] },
+    "loaded": { "type": "boolean" },
+    "evicted": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["block", "tag", "way"],
+          "properties": {
+            "block": { "type": "integer", "minimum": 0 },
+            "tag": { "type": "integer", "minimum": 0 },
+            "way": { "type": "integer", "minimum": 0 }
+          }
+        }
+      ]
+    },
+    "policy_meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "victim_selection"],
+      "properties": {
+        "policy": { "enum": ["LRU", "FIFO", "RANDOM", null] },
+        "victim_selection": { "enum": ["lru", "fifo_oldest", "random", "none", "forced"] },
+        "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+      }
+    },
+    "explanation": { "type": "string", "minLength": 1 }
+  }
+}
