@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "experiment.schema.json",
+  "title": "Bot 2 experiment record",
+  "description": "Reproducible record of a Bot 2 experiment (architecture.md 6.9): full trace, fixed parameters, every run's config/seed/summary, engine version. summary_text is generated from the run data only (deterministic). experiment_id carries microsecond precision (D-30) so same-second experiments cannot collide; the historical second-resolution format remains valid for records saved before D-30.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["experiment_id", "mode", "created_utc", "engine_version", "trace", "fixed", "runs", "summary_text"],
+  "properties": {
+    "experiment_id": { "type": "string", "pattern": "^exp-[0-9]{8}-[0-9]{6}(-[0-9]{6})?-[a-z_]+$" },
+    "mode": { "enum": ["policy_comparison", "organization_comparison"] },
+    "created_utc": { "type": "string", "minLength": 1 },
+    "engine_version": { "type": "string", "minLength": 1 },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "sha256", "addresses"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "addresses": { "type": "array", "items": { "type": "integer", "minimum": 0 } }
+      }
+    },
+    "fixed": { "type": "object" },
+    "amat_assumptions": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["hit_time", "miss_penalty", "unit"],
+          "properties": {
+            "hit_time": { "type": "number", "minimum": 0 },
+            "miss_penalty": { "type": "number", "minimum": 0 },
+            "unit": { "const": "cycles" }
+          }
+        }
+      ]
+    },
+    "runs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run_id", "config", "policy", "seed", "summary"],
+        "properties": {
+          "run_id": { "type": "integer", "minimum": 1 },
+          "config": { "$ref": "config.schema.json" },
+          "policy": { "type": ["string", "null"] },
+          "seed": { "type": ["integer", "null"] },
+          "summary": { "$ref": "summary.schema.json" }
+        }
+      }
+    },
+    "summary_text": { "type": "string", "minLength": 1 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "geometry.schema.json",
+  "title": "Derived cache geometry",
+  "description": "Engine-derived geometry for a validated configuration (architecture.md 6.3). fully_associative: sets=1, index_bits=0, index_field_present=false; direct: associativity null and sets=lines.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["capacity_bytes", "block_size_bytes", "organization", "associativity", "address_width_bits", "lines", "sets", "offset_bits", "index_bits", "tag_bits", "index_field_present", "max_address"],
+  "properties": {
+    "capacity_bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+    "block_size_bytes": { "type": "integer", "minimum": 1, "maximum": 128 },
+    "organization": { "enum": ["direct", "set_associative", "fully_associative"] },
+    "associativity": { "type": ["integer", "null"], "minimum": 1 },
+    "address_width_bits": { "type": "integer", "minimum": 4, "maximum": 64 },
+    "lines": { "type": "integer", "minimum": 1 },
+    "sets": { "type": "integer", "minimum": 1 },
+    "offset_bits": { "type": "integer", "minimum": 0, "maximum": 7 },
+    "index_bits": { "type": "integer", "minimum": 0, "maximum": 20 },
+    "tag_bits": { "type": "integer", "minimum": 0, "maximum": 64 },
+    "index_field_present": { "type": "boolean" },
+    "max_address": { "type": "integer", "minimum": 0 }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "job.schema.json",
+  "title": "Simulation job",
+  "description": "Input to cache_sim --mode simulate (architecture.md 6.4). Unknown top-level keys are rejected (typo protection).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["config", "trace"],
+  "properties": {
+    "config": { "$ref": "config.schema.json" },
+    "trace": { "$ref": "trace.schema.json" },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include_state_after_each": { "type": "boolean", "default": false }
+      }
+    }
+  }
+}

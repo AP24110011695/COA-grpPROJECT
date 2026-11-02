@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "config.schema.json",
+  "title": "Cache configuration",
+  "description": "Canonical cache configuration contract (architecture.md 6.1). Power-of-two requirements, capacity/block/associativity interplay, and the exact resource limits are enforced authoritatively by the engine; this schema captures structure and ranges.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["capacity_bytes", "block_size_bytes", "organization", "address_width_bits"],
+  "properties": {
+    "capacity_bytes": { "type": "integer", "minimum": 1, "maximum": 1048576 },
+    "block_size_bytes": { "type": "integer", "minimum": 1, "maximum": 128 },
+    "organization": { "enum": ["direct", "set_associative", "fully_associative"] },
+    "associativity": { "type": ["integer", "null"], "minimum": 2, "maximum": 1048576 },
+    "address_width_bits": { "type": "integer", "minimum": 4, "maximum": 64 },
+    "policy": { "enum": ["LRU", "FIFO", "RANDOM", null] },
+    "seed": { "type": ["integer", "null"], "minimum": 0, "maximum": 4294967295 },
+    "hit_time": { "type": ["number", "null"], "minimum": 0 },
+    "miss_penalty": { "type": ["number", "null"], "minimum": 0 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "organization": { "const": "set_associative" } } },
+      "then": { "required": ["associativity"] }
+    },
+    {
+      "if": { "properties": { "organization": { "const": "direct" } } },
+      "then": { "properties": { "policy": { "enum": [null] } } }
+    },
+    {
+      "if": { "properties": { "organization": { "enum": ["set_associative", "fully_associative"] } } },
+      "then": {
+        "required": ["policy"],
+        "properties": { "policy": { "enum": ["LRU", "FIFO", "RANDOM"] } }
+      }
+    },
+    {
+      "if": {
+        "required": ["policy"],
+        "properties": { "policy": { "const": "RANDOM" } }
+      },
+      "then": {
+        "required": ["seed"],
+        "properties": { "seed": { "type": "integer", "minimum": 0, "maximum": 4294967295 } }
+      }
+    },
+    {
+      "if": {
+        "required": ["associativity"],
+        "properties": { "associativity": { "type": "integer" } }
+      },
+      "then": { "properties": { "organization": { "const": "set_associative" } } }
+    },
+    {
+      "if": {
+        "required": ["seed"],
+        "properties": { "seed": { "type": "integer" } }
+      },
+      "then": {
+        "required": ["policy"],
+        "properties": { "policy": { "const": "RANDOM" } }
+      }
+    },
+    {
+      "anyOf": [
+        {
+          "required": ["hit_time", "miss_penalty"],
+          "properties": { "hit_time": { "type": "number" }, "miss_penalty": { "type": "number" } }
+        },
+        {
+          "properties": { "hit_time": { "enum": [null] }, "miss_penalty": { "enum": [null] } }
+        }
+      ]
+    }
+  ]
+}
