@@ -373,3 +373,135 @@ class TestManualImport:
 # --- Fully-associative conflict (AC-P6.5) ------------------------------------
 
 
+class TestFullyAssociativeConflict:
+    def test_single_set_with_ignored_target(self):
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_FULLY_ASSOCIATIVE,
+            "params": {"distinct_blocks": 3, "passes": 1, "target_set": 5,
+                       "start_block": 2},
+        })
+        assert response["ok"] is True  # no crash
+        # sets 1: base = start_block = 2 -> blocks 2,3,4 -> addresses 4,6,8.
+        assert response["trace"]["addresses"] == [4, 6, 8]
+        assert len(response["warnings"]) == 1
+        assert "target_set 5 ignored" in response["warnings"][0]
+
+    def test_single_set_no_warning_when_target_zero(self):
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_FULLY_ASSOCIATIVE,
+            "params": {"distinct_blocks": 2, "passes": 1, "target_set": 0,
+                       "start_block": 0},
+        })
+        assert response["ok"] is True
+        assert response["warnings"] == []
+        assert response["trace"]["addresses"] == [0, 2]
+
+
+# --- Error pass-through and request shape ------------------------------------
+
+
+class TestErrorsAndShape:
+    def test_engine_error_passthrough(self):
+        response = generate(
+            {"pattern": "sequential",
+             "config": ts.CONFIG_SET_ASSOCIATIVE,
+             "params": {"start_address": 0, "count": 4, "stride_bytes": 1}},
+            failing_geometry)
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_CONFIG_INVALID"
+        assert response["error"]["details"][0]["field"] == "block_size_bytes"
+
+    def test_unknown_pattern(self):
+        response = run({"pattern": "wavefront",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert "must be one of" in response["error"]["message"]
+
+    def test_missing_members(self):
+        response = run({"pattern": "repeated"})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        fields = {d["field"] for d in response["error"]["details"]}
+        assert {"config", "params"} <= fields
+
+    def test_unknown_request_key(self):
+        response = run({"pattern": "repeated",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"address": 16, "count": 1},
+                        "patter": "typo"})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert response["error"]["details"][0]["field"] == "patter"
+
+    def test_non_integer_param(self):
+        response = run({"pattern": "repeated",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"address": 16, "count": "8"}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert "params.count" in response["error"]["message"]
+
+    def test_bool_param_rejected(self):
+        response = run({"pattern": "repeated",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"address": 16, "count": True}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+
+    def test_unknown_param_key(self):
+        response = run({"pattern": "repeated",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"address": 16, "count": 1,
+                                   "addres": 16}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert response["error"]["details"][0]["field"] == "params.addres"
+
+    def test_stride_zero_suggests_repeated(self):
+        response = run({"pattern": "sequential",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"start_address": 0, "count": 4,
+                                   "stride_bytes": 0}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert "repeated" in response["error"]["message"]
+
+    def test_missing_param_key(self):
+        response = run({"pattern": "repeated",
+                        "config": ts.CONFIG_SET_ASSOCIATIVE,
+                        "params": {"address": 16}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert "params.count is required" in response["error"]["message"]
+
+    def test_config_must_be_object(self):
+        response = run({"pattern": "repeated", "config": "nope",
+                        "params": {"address": 16, "count": 1}})
+        assert response["error"]["code"] == "E_JOB_INVALID"
+
+
+# --- Integration with the real engine (Phase 6 task 6) -----------------------
+
+
+@pytest.mark.skipif(not ENGINE.exists(), reason=ENGINE_SKIP)
+class TestRealEngineIntegration:
+    def test_fetch_geometry_matches_published_fixture(self):
+        geometry = engine_client.fetch_geometry(ts.CONFIG_SET_ASSOCIATIVE)
+        assert geometry == ts.GEOMETRY_DEMO
+
+    def test_generate_with_real_engine(self):
+        response = generate(
+            {"pattern": "conflict",
+             "config": ts.CONFIG_SET_ASSOCIATIVE,
+             "params": {"distinct_blocks": 4, "passes": 1, "target_set": 0,
+                        "start_block": 0}},
+            engine_client.fetch_geometry)
+        assert response["ok"] is True
+        assert response["trace"]["addresses"] == [0, 4, 8, 12]
+        assert response["geometry_used"] == ts.GEOMETRY_DEMO
+
+    def test_generate_rejects_bad_config_via_engine(self):
+        response = generate(
+            {"pattern": "sequential",
+             "config": dict(ts.CONFIG_SET_ASSOCIATIVE, block_size_bytes=6),
+             "params": {"start_address": 0, "count": 4, "stride_bytes": 1}},
+            engine_client.fetch_geometry)
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_CONFIG_INVALID"
+        assert response["error"]["details"][0]["field"] == "block_size_bytes"
