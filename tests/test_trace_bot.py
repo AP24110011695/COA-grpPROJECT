@@ -209,3 +209,167 @@ class TestDeterminism:
 
 
 # --- Width and limit rejections (AC-P6.3) -----------------------------------
+
+
+class TestWidthAndLimitRejections:
+    def test_sequential_over_max_rejected(self):
+        response = run({
+            "pattern": "sequential",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,  # max_address 255
+            "params": {"start_address": 250, "count": 3, "stride_bytes": 4},
+        })
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        assert "255" in response["error"]["message"]
+
+    def test_repeated_over_max_rejected(self):
+        response = run({
+            "pattern": "repeated",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"address": 300, "count": 2},
+        })
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        assert "255" in response["error"]["message"]
+
+    def test_conflict_over_max_rejected(self):
+        # sets 2: start_block 128 -> base 128 -> address 256 > 255.
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 2, "passes": 1, "target_set": 0,
+                       "start_block": 128},
+        })
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        assert "256" in response["error"]["message"]
+
+    def test_conflict_base_congruence_exact_sequence(self):
+        # Audit-2 (§6): independently calculated exact sequence. Sets 2:
+        # base = start_block + ((target_set - start_block) mod sets)
+        # = 7 + ((0 - 7) mod 2) = 8 (first block >= 7 mapping to set 0);
+        # blocks 8, 10; block_size 2.
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 2, "passes": 2, "target_set": 0,
+                       "start_block": 7},
+        })
+        assert response["ok"] is True
+        assert response["trace"]["addresses"] == [16, 20, 16, 20]
+        assert response["warnings"] == []
+
+    def test_sequential_exact_sequence(self):
+        response = run({
+            "pattern": "sequential",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"start_address": 100, "count": 4, "stride_bytes": 7},
+        })
+        assert response["ok"] is True
+        assert response["trace"]["addresses"] == [100, 107, 114, 121]
+        assert response["trace"]["name"] == "sequential-100-4-7"
+
+    def test_sequential_count_over_limit(self):
+        response = run({
+            "pattern": "sequential",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"start_address": 0, "count": 100001,
+                       "stride_bytes": 1},
+        })
+        assert response["error"]["code"] == "E_LIMIT"
+        assert "100000" in response["error"]["message"]
+
+    def test_conflict_total_over_limit(self):
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 100001, "passes": 1,
+                       "target_set": 0, "start_block": 0},
+        })
+        assert response["error"]["code"] == "E_LIMIT"
+
+    def test_manual_over_limit(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "\n".join(["1"] * 100001)},
+        })
+        assert response["error"]["code"] == "E_LIMIT"
+
+
+# --- Manual import (AC-P6.4) -------------------------------------------------
+
+
+class TestManualImport:
+    def test_e3_trace_text(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "0 # A\n4 # B\n0\n8 # C\n4"},
+        })
+        assert response["trace"]["addresses"] == [0, 4, 0, 8, 4]
+        assert response["trace"]["name"] == "manual-import"
+
+    def test_hex_upper_and_lower(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "0x10\n0XFF\n16   # trailing comment"},
+        })
+        assert response["trace"]["addresses"] == [16, 255, 16]
+
+    def test_blank_and_comment_only_is_empty(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "# nothing here\n\n   \n"},
+        })
+        assert response["trace"]["addresses"] == []
+
+    def test_bad_token_reports_line_number(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "4\nxyz\n8"},
+        })
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        detail = response["error"]["details"][0]
+        assert detail["field"] == "line 2"
+        assert detail["received"] == "xyz"
+
+    def test_all_problem_lines_collected(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "zzz\n4\nqqq"},
+        })
+        assert len(response["error"]["details"]) == 2
+
+    def test_problem_lines_truncated_like_the_engine(self):
+        # Regression (2026-10-27 audit): a pathological all-bad paste must
+        # not build an unbounded issue list — details cap at 10 lines plus
+        # one truncation summary; the message keeps the true total.
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "\n".join(["zzz"] * 15)},
+        })
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        assert "15 problem line(s)" in response["error"]["message"]
+        assert len(response["error"]["details"]) == 11
+        assert response["error"]["details"][-1]["problem"] == \
+            "further problem lines truncated (5 more)"
+
+    def test_line_over_max_rejected(self):
+        response = run({
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "4\n300"},
+        })
+        assert response["error"]["code"] == "E_TRACE_INVALID"
+        assert "255" in response["error"]["details"][0]["problem"]
+
+
+# --- Fully-associative conflict (AC-P6.5) ------------------------------------
+
+
