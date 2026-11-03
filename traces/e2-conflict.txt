@@ -1,0 +1,7 @@
+# e2-conflict - sample trace (manual format, one address per line)
+# blocks 0,4,8,12 all map to set 0 (architecture.md 13 E2)
+0
+8
+16
+24
+0

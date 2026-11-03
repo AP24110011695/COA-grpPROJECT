@@ -1,0 +1,7 @@
+# e3-lru-vs-fifo - sample trace (manual format, one address per line)
+# A=0, B=4, C=8; LRU and FIFO differ (architecture.md 13 E3)
+0
+4
+0
+8
+4

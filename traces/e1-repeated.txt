@@ -1,0 +1,7 @@
+# e1-repeated - sample trace (manual format, one address per line)
+# the same block five times (architecture.md 13 E1)
+16
+16
+16
+16
+16
