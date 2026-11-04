@@ -1,0 +1,189 @@
+/* Dark theme overrides — applied after ui/styles.css when the sidebar
+ * Theme control selects Dark. Two layers:
+ *
+ * 1. :root/body variable overrides — project-owned components read these
+ *    automatically (ui/styles.css consumes the same variables).
+ * 2. Streamlit chrome overrides — scoped to the testids/classes verified
+ *    live on Streamlit 1.66.1 (docs/memory.md, dark-mode audit). These are
+ *    the only version-sensitive selectors in the project; keep them in
+ *    this one block and re-verify on Streamlit upgrades.
+ *
+ * Presentation only: no simulation data, controls, or behavior changes.
+ */
+
+/* 1. palette overrides for project-owned components */
+:root, body {
+  --bg: #16181D;
+  --bg-subtle: #1F232B;
+  --border: #667080;
+  --text: #E8EAED;
+  --text-secondary: #A8B0BD;
+  --accent: #4F8DE8;
+  --accent-soft: #22304A;
+  --success: #66BB6A;
+  --success-soft: #1E3A27;
+  --danger: #EF5350;
+  --danger-soft: #3A1D20;
+}
+
+/* 2. Streamlit chrome — surfaces */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+  background-color: #16181D;
+  color: #E8EAED;
+}
+[data-testid="stHeader"] {
+  background-color: rgba(22, 24, 29, 0);
+}
+[data-testid="stDecoration"] {
+  background-image: none;
+}
+[data-testid="stSidebar"] {
+  background-color: #1F232B;
+  border-right: 1px solid #667080;
+}
+[data-testid="stVerticalBlockBorderWrapper"] {
+  background-color: #1F232B;
+  border-color: #667080;
+}
+[data-testid="stExpander"] {
+  background-color: #1F232B;
+  border-color: #667080;
+}
+
+/* 3. Streamlit chrome — text */
+.stApp h1, .stApp h2, .stApp h3 {
+  color: #E8EAED;
+}
+[data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p {
+  color: #E8EAED;
+}
+[data-testid="stWidgetLabel"] p {
+  color: #E8EAED;
+}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {
+  color: #A8B0BD;
+}
+[data-testid="stMetricLabel"] p {
+  color: #A8B0BD;
+}
+[data-testid="stMetricValue"] div {
+  color: #E8EAED;
+}
+[data-testid="stRadio"] label,
+[data-testid="stCheckbox"] label {
+  color: #E8EAED;
+}
+[data-testid="stTabs"] button {
+  color: #A8B0BD;
+}
+[data-testid="stTabs"] button[aria-selected="true"] {
+  color: #4F8DE8;
+}
+[data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+  background-color: #4F8DE8;
+}
+[data-testid="stTabs"] [data-baseweb="tab-border"] {
+  background-color: #667080;
+}
+[data-testid="stExpander"] summary p,
+[data-testid="stExpander"] summary div {
+  color: #E8EAED;
+}
+
+/* 4. Streamlit chrome — inputs, buttons, dropdowns.
+ * .stApp prefixes raise specificity above Streamlit's emotion-injected
+ * light-theme styles (verified visually on 1.66.1). */
+.stApp [data-baseweb="input"] {
+  background-color: #1F232B;
+  border-color: #667080;
+}
+.stApp [data-testid="stSelectbox"] > div,
+.stApp [data-testid="stNumberInput"] > div,
+.stApp [data-testid="stTextInput"] > div,
+.stApp [data-testid="stTextArea"] > div,
+.stApp [data-testid="stRadio"] > div,
+.stApp [data-testid="stDateInput"] > div {
+  background-color: #1F232B;
+  border-color: #667080;
+}
+.stApp [data-testid="stNumberInput"] input,
+.stApp [data-testid="stTextInput"] input,
+.stApp [data-testid="stTextArea"] textarea,
+.stApp [data-testid="stSelectbox"] input,
+.stApp [data-testid="stSelectbox"] > div div,
+.stApp [data-testid="stSelectbox"] [data-baseweb="select"] > div,
+.stApp [data-testid="stDateInput"] input {
+  color: #E8EAED;
+  background: transparent;
+}
+.stApp [data-testid="stNumberInputContainer"] {
+  background-color: #1F232B;
+}
+.stApp [data-baseweb="input"]:focus-within,
+.stApp [data-testid="stTextArea"]:focus-within textarea {
+  border-color: #4F8DE8;
+}
+.stApp [data-baseweb="popover"] > div {
+  background-color: #1F232B;
+  border: 1px solid #667080;
+}
+.stApp [data-baseweb="popover"] li,
+.stApp [data-baseweb="popover"] div[role="option"] {
+  color: #E8EAED;
+}
+.stApp [data-baseweb="popover"] div[role="option"][aria-selected="true"] {
+  background-color: #22304A;
+}
+.stApp .stButton > button,
+.stApp [data-testid="stDownloadButton"] > button {
+  background-color: #1F232B;
+  color: #E8EAED;
+  border: 1px solid #667080;
+}
+.stApp .stButton > button:hover,
+.stApp [data-testid="stDownloadButton"] > button:hover {
+  border-color: #4F8DE8;
+  color: #4F8DE8;
+}
+.stApp button[kind="primary"],
+.stApp [data-testid="baseButton-primary"] {
+  background-color: #4F8DE8;
+  color: #16181D;
+  border: 1px solid #4F8DE8;
+}
+.stApp button[kind="primary"]:hover {
+  background-color: #6BA3ED;
+  color: #16181D;
+  border-color: #6BA3ED;
+}
+.stApp button[kind="primary"]:disabled,
+.stApp button[kind="secondary"]:disabled {
+  background-color: #1F232B;
+  color: #A8B0BD;
+  border: 1px solid #667080;
+}
+
+/* 5. Streamlit chrome — data views, alerts, status */
+[data-testid="stDataFrame"] {
+  border: 1px solid #667080;
+  background-color: #1F232B;
+  color: #E8EAED;
+}
+[data-testid="stStatus"] {
+  background-color: #1F232B;
+  border: 1px solid #667080;
+}
+[data-testid="stStatus"] p {
+  color: #E8EAED;
+}
+[data-testid="stAlert"] {
+  background-color: rgba(31, 35, 43, 0.95);
+  border: 1px solid #667080;
+}
+[data-testid="stAlert"] p, [data-testid="stAlert"] div {
+  color: #E8EAED;
+}
+[data-testid="stSpinner"] p {
+  color: #A8B0BD;
+}
