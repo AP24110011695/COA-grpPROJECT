@@ -124,3 +124,88 @@ class TestSequentialAndRepeated:
         assert response["trace"]["name"] == "repeated-16-0"
 
 
+# --- Conflict (AC-P6.1, AC-P6.5) -------------------------------------------
+
+
+class TestConflictPattern:
+    def test_default_blocks_in_one_set(self):
+        # sets 2, block size 2: blocks 0,2,4,6 -> addresses 0,4,8,12.
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 4, "passes": 1, "target_set": 0,
+                       "start_block": 0},
+        })
+        assert response["trace"]["addresses"] == [0, 4, 8, 12]
+        assert response["warnings"] == []
+
+    def test_target_set_three_with_rounding(self):
+        # AC-P6.1: sets 4, target_set 3, start_block 0 -> blocks 3,7,11,15
+        # -> addresses 6,14,22,30 (block size 2).
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_DIRECT,
+            "params": {"distinct_blocks": 4, "passes": 1, "target_set": 3,
+                       "start_block": 0},
+        })
+        assert response["trace"]["addresses"] == [6, 14, 22, 30]
+        assert response["trace"]["name"] == "conflict-4b-set3-p1"
+
+    def test_start_block_rounds_up_to_requested_set(self):
+        # sets 2, target_set 0, start_block 1 -> base 2 -> blocks 2,4.
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 2, "passes": 1, "target_set": 0,
+                       "start_block": 1},
+        })
+        assert response["trace"]["addresses"] == [4, 8]
+
+    def test_passes_repeat_the_sequence(self):
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 2, "passes": 3, "target_set": 0,
+                       "start_block": 0},
+        })
+        assert response["trace"]["addresses"] == [0, 4, 0, 4, 0, 4]
+        assert response["trace"]["name"] == "conflict-2b-set0-p3"
+
+    def test_target_set_out_of_range_rejected(self):
+        response = run({
+            "pattern": "conflict",
+            "config": ts.CONFIG_DIRECT,  # sets 4
+            "params": {"distinct_blocks": 2, "passes": 1, "target_set": 4,
+                       "start_block": 0},
+        })
+        assert response["ok"] is False
+        assert response["error"]["code"] == "E_JOB_INVALID"
+        assert "[0, 4)" in response["error"]["message"]
+
+
+# --- Determinism (AC-P6.2) --------------------------------------------------
+
+
+class TestDeterminism:
+    def test_identical_requests_identical_responses(self):
+        request = {
+            "pattern": "conflict",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"distinct_blocks": 4, "passes": 2, "target_set": 1,
+                       "start_block": 3},
+        }
+        first = run(request)
+        second = run(request)
+        assert first["ok"] is True
+        assert first == second
+
+    def test_manual_import_is_deterministic(self):
+        request = {
+            "pattern": "manual",
+            "config": ts.CONFIG_SET_ASSOCIATIVE,
+            "params": {"text": "0x10 # a\n16"},
+        }
+        assert run(request) == run(request)
+
+
+# --- Width and limit rejections (AC-P6.3) -----------------------------------
