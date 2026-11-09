@@ -1,0 +1,17 @@
+/* The Cache Machine — dark theme overrides.
+ * Applied after scene.css when the sidebar Theme control selects Dark
+ * (body class `cm-dark`, set by scene_app.js from the payload's
+ * presentation metadata). Presentation only. */
+body.cm-dark {
+  --cm-accent: #4F8DE8;
+  --cm-accent-soft: #22304A;
+  --cm-bg: #16181D;
+  --cm-bg-subtle: #1F232B;
+  --cm-border: #667080;
+  --cm-text: #E8EAED;
+  --cm-text2: #A8B0BD;
+  --cm-success: #66BB6A;
+  --cm-danger: #EF5350;
+  --cm-panel: rgba(31, 35, 43, 0.94);
+  --cm-btn-bg: #1F232B;
+}
