@@ -1,0 +1,134 @@
+{
+  "amat_assumptions": {
+    "hit_time": 1.0,
+    "miss_penalty": 20.0,
+    "unit": "cycles"
+  },
+  "created_utc": "2026-10-24T20:17:25Z",
+  "engine_version": "0.1.0",
+  "experiment_id": "exp-20261024-201725-policy",
+  "fixed": {
+    "address_width_bits": 8,
+    "associativity": 2,
+    "block_size_bytes": 2,
+    "capacity_bytes": 8,
+    "organization": "set_associative"
+  },
+  "mode": "policy_comparison",
+  "runs": [
+    {
+      "config": {
+        "address_width_bits": 8,
+        "associativity": 2,
+        "block_size_bytes": 2,
+        "capacity_bytes": 8,
+        "hit_time": 1.0,
+        "miss_penalty": 20.0,
+        "organization": "set_associative",
+        "policy": "LRU"
+      },
+      "policy": "LRU",
+      "run_id": 1,
+      "seed": null,
+      "summary": {
+        "accesses": 5,
+        "amat": {
+          "hit_time": 1.0,
+          "miss_penalty": 20.0,
+          "unit": "cycles",
+          "value": 17.0
+        },
+        "evictions": 2,
+        "hit_rate": 0.2,
+        "hits": 1,
+        "miss_rate": 0.8,
+        "misses": 4,
+        "replacement_meta": {
+          "policy": "LRU"
+        },
+        "trace_sha256": "9d2213cd8aea1ed02673c08ea29e132b5bb6c55384310cc67dce969229c49f25"
+      }
+    },
+    {
+      "config": {
+        "address_width_bits": 8,
+        "associativity": 2,
+        "block_size_bytes": 2,
+        "capacity_bytes": 8,
+        "hit_time": 1.0,
+        "miss_penalty": 20.0,
+        "organization": "set_associative",
+        "policy": "FIFO"
+      },
+      "policy": "FIFO",
+      "run_id": 2,
+      "seed": null,
+      "summary": {
+        "accesses": 5,
+        "amat": {
+          "hit_time": 1.0,
+          "miss_penalty": 20.0,
+          "unit": "cycles",
+          "value": 13.0
+        },
+        "evictions": 1,
+        "hit_rate": 0.4,
+        "hits": 2,
+        "miss_rate": 0.6,
+        "misses": 3,
+        "replacement_meta": {
+          "policy": "FIFO"
+        },
+        "trace_sha256": "9d2213cd8aea1ed02673c08ea29e132b5bb6c55384310cc67dce969229c49f25"
+      }
+    },
+    {
+      "config": {
+        "address_width_bits": 8,
+        "associativity": 2,
+        "block_size_bytes": 2,
+        "capacity_bytes": 8,
+        "hit_time": 1.0,
+        "miss_penalty": 20.0,
+        "organization": "set_associative",
+        "policy": "RANDOM",
+        "seed": 12345
+      },
+      "policy": "RANDOM",
+      "run_id": 3,
+      "seed": 12345,
+      "summary": {
+        "accesses": 5,
+        "amat": {
+          "hit_time": 1.0,
+          "miss_penalty": 20.0,
+          "unit": "cycles",
+          "value": 13.0
+        },
+        "evictions": 1,
+        "hit_rate": 0.4,
+        "hits": 2,
+        "miss_rate": 0.6,
+        "misses": 3,
+        "replacement_meta": {
+          "policy": "RANDOM",
+          "rng_draws": 1,
+          "seed": 12345
+        },
+        "trace_sha256": "9d2213cd8aea1ed02673c08ea29e132b5bb6c55384310cc67dce969229c49f25"
+      }
+    }
+  ],
+  "summary_text": "LRU: 1 hit / 5 accesses (20.00%), 2 evictions. FIFO: 2 hits / 5 accesses (40.00%), 1 eviction. RANDOM (seed 12345): 2 hits / 5 accesses (40.00%), 1 eviction. Best hit rate: FIFO and RANDOM tie at 40.00% (LRU 20.00%).",
+  "trace": {
+    "addresses": [
+      0,
+      4,
+      0,
+      8,
+      4
+    ],
+    "name": "e3-lru-vs-fifo",
+    "sha256": "9d2213cd8aea1ed02673c08ea29e132b5bb6c55384310cc67dce969229c49f25"
+  }
+}
